@@ -173,7 +173,7 @@ impl Quaternion {
 		let mut v1 = Vector3::new();
 		let mut r = v_from.dot(v_to) + 1.0f32;
 
-		if r < ::std::f32::EPSILON {
+		if r < 0.000001f32 {
 			r = 0.0f32;
 			if v_from.get_x().abs() > v_from.get_z().abs() {
 				v1.set(- v_from.get_y(), v_from.get_x(), 0.0f32);
@@ -254,5 +254,137 @@ impl Quaternion {
 		self.y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
 		self.z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
 		self.w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
+	}
+
+	pub fn slerp(&mut self, qb: &Quaternion, t: f32) {
+		if t == 0.0f32 {
+			return;
+		} else if t == 1.0f32 {
+			self.copy(qb);
+			return;
+		}
+
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let w = self.w;
+
+		let mut cos_half_theta = w * qb.w + x * qb.x + y * qb.y + z * qb.z;
+
+		if cos_half_theta < 0.0f32 {
+			self.w = - qb.w;
+			self.x = - qb.x;
+			self.y = - qb.y;
+			self.z = - qb.z;
+
+			cos_half_theta = - cos_half_theta;
+		} else {
+			self.copy(qb);
+		}
+
+		if cos_half_theta >= 1.0 {
+			self.w = w;
+			self.x = x;
+			self.y = y;
+			self.z = z;
+
+			return;
+		}
+
+		let sin_half_theta = (1.0f32 - cos_half_theta * cos_half_theta).sqrt();
+
+		if sin_half_theta.abs() < 0.001f32 {
+			self.w = 0.5f32 * ( w + self.w );
+			self.x = 0.5f32 * ( x + self.x );
+			self.y = 0.5f32 * ( y + self.y );
+			self.z = 0.5f32 * ( z + self.z );
+
+			return;
+		}
+
+		let half_theta = sin_half_theta.atan2(cos_half_theta);
+		let ratio_a = ((1.0f32 - t) * half_theta).sin() / sin_half_theta;
+		let ratio_b = (t * half_theta).sin() / sin_half_theta;
+
+		self.w = w * ratio_a + self.w * ratio_b;
+		self.x = x * ratio_a + self.x * ratio_b;
+		self.y = y * ratio_a + self.y * ratio_b;
+		self.z = z * ratio_a + self.z * ratio_b;
+	}
+
+	pub fn equals(&self, quaternion: &Quaternion) -> bool {
+		( quaternion.x == self.x ) && ( quaternion.y == self.y ) && ( quaternion.z == self.z ) && ( quaternion.w == self.w )
+	}
+
+	pub fn copy_from_array(&mut self, array: &[f32]) {
+		self.copy_from_array_offset(array, 0);
+	}
+
+	pub fn copy_from_array_offset(&mut self, array: &[f32], offset: usize) {
+		self.x = array[offset];
+		self.y = array[offset + 1];
+		self.z = array[offset + 2];
+		self.z = array[offset + 3];
+	}
+
+	pub fn copy_to_array(&self, array: &mut [f32]) {
+		self.copy_to_array_offset(array, 0);
+	}
+
+	pub fn copy_to_array_offset(&self, array: &mut [f32], offset: usize) {
+		array[offset] = self.x;
+		array[offset + 1] = self.y;
+		array[offset + 2] = self.z;
+		array[offset + 3] = self.w;
+	}
+
+	pub fn slerp_static(qa: &Quaternion, qb: &Quaternion, qm: &mut Quaternion, t: f32) {
+		qm.copy(qa);
+		qm.slerp(qb, t);
+	}
+
+	pub fn slerp_flat(dst: &mut [f32], dst_offset: usize, src0: &[f32], src_offset0: usize, src1: &[f32], src_offset1: usize, t: f32) {
+		let mut t = t;
+		let mut x0 = src0[ src_offset0 + 0 ];
+		let mut y0 = src0[ src_offset0 + 1 ];
+		let mut z0 = src0[ src_offset0 + 2 ];
+		let mut w0 = src0[ src_offset0 + 3 ];
+		let x1 = src1[ src_offset1 + 0 ];
+		let y1 = src1[ src_offset1 + 1 ];
+		let z1 = src1[ src_offset1 + 2 ];
+		let w1 = src1[ src_offset1 + 3 ];
+
+		if w0 != w1 || x0 != x1 || y0 != y1 || z0 != z1 {
+			let mut s = 1.0f32 - t;
+			let cos = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1;
+			let dir = if cos >= 0.0f32 { 1.0f32 } else { -1.0f32 };
+			let sqr_sin = 1.0f32 - cos * cos;
+
+			if sqr_sin > ::std::f32::EPSILON {
+				let sin = sqr_sin.sqrt();
+				let len = sin.atan2(cos * dir);
+				s = (s * len).sin() / sin;
+				t = (t * len).sin() / sin;
+			}
+			let t_dir = t * dir;
+			
+			x0 = x0 * s + x1 * t_dir;
+			y0 = y0 * s + y1 * t_dir;
+			z0 = z0 * s + z1 * t_dir;
+			w0 = w0 * s + w1 * t_dir;
+
+			if s == 1.0f32 - t {
+				let f = 1.0f32 / ( x0 * x0 + y0 * y0 + z0 * z0 + w0 * w0 ).sqrt();
+				x0 *= f;
+				y0 *= f;
+				z0 *= f;
+				w0 *= f;
+			}
+
+		}
+		dst[ dst_offset ] = x0;
+		dst[ dst_offset + 1 ] = y0;
+		dst[ dst_offset + 2 ] = z0;
+		dst[ dst_offset + 3 ] = w0;
 	}
 }
