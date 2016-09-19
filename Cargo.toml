@@ -1,0 +1,8 @@
+[package]
+name = "three"
+version = "0.1.0"
+authors = ["Daniel Lewis <thecontrarian42@gmail.com>"]
+
+[dependencies]
+rand = "*"
+uuid = { version = "0.3.1", features = ["serde", "v4"] }
