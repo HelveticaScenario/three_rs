@@ -66,7 +66,7 @@ impl Quaternion {
 		self.w = quaternion.w;
 	}
 
-	pub fn set_from_euler(&mut self, euler: &Euler, update: bool) {
+	pub fn set_from_euler(&mut self, euler: &Euler) {
 
 		let c1 = ( euler.get_x() / 2.0f32 ).cos();
 		let c2 = ( euler.get_y() / 2.0f32 ).cos();

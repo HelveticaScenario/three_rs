@@ -83,7 +83,7 @@ impl Euler {
 		self.order = euler.order;
 	}
 
-	pub fn set_from_rotation_matrix(&mut self, m: &Matrix4, order: Option<RotationOrders>, update: bool) {
+	pub fn set_from_rotation_matrix(&mut self, m: &Matrix4, order: Option<RotationOrders>) {
 		let te = m.get_elements();
 		let m11 = te[ 0 ];
 		let m12 = te[ 4 ];
@@ -171,10 +171,10 @@ impl Euler {
 		self.order = order;
 	}
 
-	pub fn set_from_quaternion(&mut self, q: &Quaternion, order: Option<RotationOrders>, update: bool) {
+	pub fn set_from_quaternion(&mut self, q: &Quaternion, order: Option<RotationOrders>) {
 		let mut matrix = Matrix4::new();
 		matrix.make_rotation_from_quaternion(q);
-		self.set_from_rotation_matrix(&matrix, order, update);
+		self.set_from_rotation_matrix(&matrix, order);
 	}
 
 	pub fn set_from_vector3(&mut self, v: &Vector3, order: Option<RotationOrders>) {
@@ -187,8 +187,8 @@ impl Euler {
 
 	pub fn reorder(&mut self, new_order: RotationOrders) {
 		let mut q = Quaternion::new();
-		q.set_from_euler(self, false);
-		self.set_from_quaternion(&q, Some(new_order), false);
+		q.set_from_euler(self);
+		self.set_from_quaternion(&q, Some(new_order));
 	}
 
 	pub fn equals(&mut self, euler: &Euler) -> bool {
