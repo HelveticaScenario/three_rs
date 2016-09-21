@@ -39,4 +39,8 @@ pub fn smootherstep(x: f32, min: f32, max: f32) -> f32 {
 	x * x * x * ( x * ( x * 6.0 - 15.0 ) + 10.0 )
 }
 
+pub fn nearest_power_of_two(value: u32) -> u32 {
+	2u32.pow(( (value as f32).ln() / ::std::f32::consts::LN_2 ).round() as u32)
+}
+
 

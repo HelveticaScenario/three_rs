@@ -252,20 +252,20 @@ impl Vector2 {
 		(v.x == self.x) && (v.y == self.y)
 	}
 
-	pub fn copy_from_array(&mut self, array: &[f32]) {
-		self.copy_from_array_offset(array, 0);
-	}
-
-	pub fn copy_from_array_offset(&mut self, array: &[f32], offset: usize) {
+	pub fn copy_from_array(&mut self, array: &[f32], offset: Option<usize>) {
+		let offset = match offset {
+			Some(off) => off,
+			None => 0usize,
+		};
 		self.x = array[offset];
 		self.y = array[offset + 1];
 	}
 
-	pub fn copy_to_array(&self, array: &mut [f32]) {
-		self.copy_to_array_offset(array, 0);
-	}
-
-	pub fn copy_to_array_offset(&self, array: &mut [f32], offset: usize) {
+	pub fn copy_to_array(&self, array: &mut [f32], offset: Option<usize>) {
+		let offset = match offset {
+			Some(off) => off,
+			None => 0usize,
+		};
 		array[offset] = self.x;
 		array[offset + 1] = self.y;
 	}

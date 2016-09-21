@@ -1,4 +1,4 @@
-pub mod math;
+pub mod math_static;
 pub mod vector2;
 pub mod vector3;
 pub mod quaternion;

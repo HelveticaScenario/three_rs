@@ -231,13 +231,13 @@ impl Quaternion {
 	}
 
 	pub fn multiply(&mut self, q: &Quaternion) {
-		let s = &self.clone();
-		self.multiply_quaternions(s, q);
+		let s = *self;
+		self.multiply_quaternions(&s, q);
 	}
 
 	pub fn premultiply(&mut self, q: &Quaternion) {
-		let s = &self.clone();
-		self.multiply_quaternions(q, s);
+		let s = *self;
+		self.multiply_quaternions(q, &s);
 	}
 
 	pub fn multiply_quaternions(&mut self, a: &Quaternion, b: &Quaternion) {
@@ -316,22 +316,22 @@ impl Quaternion {
 		( quaternion.x == self.x ) && ( quaternion.y == self.y ) && ( quaternion.z == self.z ) && ( quaternion.w == self.w )
 	}
 
-	pub fn copy_from_array(&mut self, array: &[f32]) {
-		self.copy_from_array_offset(array, 0);
-	}
-
-	pub fn copy_from_array_offset(&mut self, array: &[f32], offset: usize) {
+	pub fn copy_from_array(&mut self, array: &[f32], offset: Option<usize>) {
+		let offset = match offset {
+			Some(off) => off,
+			None => 0usize,
+		};
 		self.x = array[offset];
 		self.y = array[offset + 1];
 		self.z = array[offset + 2];
 		self.z = array[offset + 3];
 	}
 
-	pub fn copy_to_array(&self, array: &mut [f32]) {
-		self.copy_to_array_offset(array, 0);
-	}
-
-	pub fn copy_to_array_offset(&self, array: &mut [f32], offset: usize) {
+	pub fn copy_to_array(&self, array: &mut [f32], offset: Option<usize>) {
+		let offset = match offset {
+			Some(off) => off,
+			None => 0usize,
+		};
 		array[offset] = self.x;
 		array[offset + 1] = self.y;
 		array[offset + 2] = self.z;
@@ -345,11 +345,11 @@ impl Quaternion {
 
 	pub fn slerp_flat(dst: &mut [f32], dst_offset: usize, src0: &[f32], src_offset0: usize, src1: &[f32], src_offset1: usize, t: f32) {
 		let mut t = t;
-		let mut x0 = src0[ src_offset0 + 0 ];
+		let mut x0 = src0[ src_offset0 ];
 		let mut y0 = src0[ src_offset0 + 1 ];
 		let mut z0 = src0[ src_offset0 + 2 ];
 		let mut w0 = src0[ src_offset0 + 3 ];
-		let x1 = src1[ src_offset1 + 0 ];
+		let x1 = src1[ src_offset1 ];
 		let y1 = src1[ src_offset1 + 1 ];
 		let z1 = src1[ src_offset1 + 2 ];
 		let w1 = src1[ src_offset1 + 3 ];
