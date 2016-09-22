@@ -9,7 +9,15 @@ pub struct Matrix4 {
 
 impl Matrix4 {
 	pub fn new() -> Matrix4 {
-		unimplemented!();
+		let elements = [
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
+			0.0, 0.0, 0.0, 1.0
+		];
+		Matrix4 {
+			elements: elements
+		}
 	}
 
 	pub fn get_elements(&self) -> &[f32; 16] {
@@ -558,7 +566,7 @@ impl Matrix4 {
 
 		if det == 0.0 {
 
-			let msg = "THREE.Matrix4.getInverse(): can't invert matrix; determinant is 0";
+			let msg = "Matrix4.getInverse(): can't invert matrix; determinant is 0";
 
 			if throw_on_degenerate == true {
 
