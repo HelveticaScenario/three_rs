@@ -143,39 +143,99 @@ impl Vector3 {
 	}
 
 	pub fn apply_euler(&mut self, euler: &Euler) {
-		unimplemented!();
+		let mut quaternion = Quaternion::new();
+		quaternion.set_from_euler(euler);
+		self.apply_quaternion(&quaternion);
 	}
 
-	pub fn apply_axis_angle(&mut self) {
-		unimplemented!();
+	pub fn apply_axis_angle(&mut self, axis: &Vector3, angle: f32) {
+		let mut quaternion = Quaternion::new();
+		quaternion.set_from_axis_angle(axis, angle);
+		self.apply_quaternion(&quaternion);
 	}
 
 	pub fn apply_matrix3(&mut self, m: &Matrix3) {
-		unimplemented!();
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let e = m.get_elements();
+		self.x = e[ 0 ] * x + e[ 3 ] * y + e[ 6 ] * z;
+		self.y = e[ 1 ] * x + e[ 4 ] * y + e[ 7 ] * z;
+		self.z = e[ 2 ] * x + e[ 5 ] * y + e[ 8 ] * z;
+
 	}
 	
 	pub fn apply_matrix4(&mut self, m: &Matrix4) {
-		unimplemented!();
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let e = m.get_elements();
+		self.x = e[ 0 ] * x + e[ 4 ] * y + e[ 8 ]  * z + e[ 12 ];
+		self.y = e[ 1 ] * x + e[ 5 ] * y + e[ 9 ]  * z + e[ 13 ];
+		self.z = e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z + e[ 14 ];
 	}
 
 	pub fn apply_projection(&mut self, m: &Matrix4) {
-		unimplemented!();
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let e = m.get_elements();
+		let d = 1.0 / ( e[ 3 ] * x + e[ 7 ] * y + e[ 11 ] * z + e[ 15 ] ); // perspective divide
+
+		self.x = ( e[ 0 ] * x + e[ 4 ] * y + e[ 8 ]  * z + e[ 12 ] ) * d;
+		self.y = ( e[ 1 ] * x + e[ 5 ] * y + e[ 9 ]  * z + e[ 13 ] ) * d;
+		self.z = ( e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z + e[ 14 ] ) * d;
 	}
 
-	pub fn apply_quaternion(&mut self, m: &Quaternion) {
-		unimplemented!();
+	pub fn apply_quaternion(&mut self, q: &Quaternion) {
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let qx = q.get_x();
+		let qy = q.get_y();
+		let qz = q.get_z();
+		let qw = q.get_w();
+		
+		// calculate quat * vector
+
+		let ix =  qw * x + qy * z - qz * y;
+		let iy =  qw * y + qz * x - qx * z;
+		let iz =  qw * z + qx * y - qy * x;
+		let iw = - qx * x - qy * y - qz * z;
+
+		// calculate result * inverse quat
+
+		self.x = ix * qw + iw * - qx + iy * - qz - iz * - qy;
+		self.y = iy * qw + iw * - qy + iz * - qx - ix * - qz;
+		self.z = iz * qw + iw * - qz + ix * - qy - iy * - qx;
 	}
 
 	pub fn project(&mut self, camera: &Camera) {
-		unimplemented!();
+		let mut matrix = Matrix4::new();
+		matrix.multiply_matrices(camera.get_projection_matrix(), camera.get_matrix_world_inverse());
+		self.apply_projection( &matrix );
 	}
 
 	pub fn unproject(&mut self, camera: &Camera) {
-		unimplemented!();
+		let mut matrix = Matrix4::new();
+		let mut matrix1 = Matrix4::new();
+		let mut matrix2 = Matrix4::new();
+		matrix1.get_inverse(camera.get_matrix_world_inverse(), false);
+		matrix2.get_inverse(camera.get_projection_matrix(), false);
+		matrix.multiply_matrices(&matrix1, &matrix2);
+		self.apply_projection(&matrix);
 	}
 
 	pub fn transform_direction(&mut self, m: &Matrix4) {
-		unimplemented!();
+		let x = self.x;
+		let y = self.y;
+		let z = self.z;
+		let e = m.get_elements();
+
+		self.x = e[ 0 ] * x + e[ 4 ] * y + e[ 8 ]  * z;
+		self.y = e[ 1 ] * x + e[ 5 ] * y + e[ 9 ]  * z;
+		self.z = e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z;
+		self.normalize();
 	}
 
 	pub fn divide(&mut self, v: &Vector3) {
@@ -370,7 +430,11 @@ impl Vector3 {
 	}
 
 	pub fn set_from_spherical(&mut self, s: &Spherical) {
-		unimplemented!();
+		let sin_phi_radius = s.get_phi().sin() * s.get_radius();
+
+		self.x = sin_phi_radius * s.get_theta().sin();
+		self.y = s.get_phi().cos() * s.get_radius();
+		self.z = sin_phi_radius * s.get_theta().cos();
 	}
 
 	pub fn set_from_matrix_position(&mut self, m: &Matrix4) {
