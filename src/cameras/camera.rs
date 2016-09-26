@@ -2,8 +2,8 @@ use super::super::math::matrix4::Matrix4;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Camera {
-	matrix_world_inverse: Matrix4,
-	projection_matrix: Matrix4,
+	pub matrix_world_inverse: Matrix4,
+	pub projection_matrix: Matrix4,
 }
 
 impl Camera {

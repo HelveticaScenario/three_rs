@@ -4,7 +4,7 @@ use super::euler::{Euler, RotationOrders};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix4 {
-	elements: [f32; 16] 
+	pub elements: [f32; 16] 
 }
 
 impl Matrix4 {

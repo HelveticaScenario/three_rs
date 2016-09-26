@@ -1,6 +1,6 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Layers {
-	mask: u64,
+	pub mask: u64,
 }
 
 impl Layers {

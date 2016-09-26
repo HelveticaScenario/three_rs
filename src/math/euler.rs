@@ -25,10 +25,10 @@ pub static mut DEFAULT_ORDER: RotationOrders = RotationOrders::XYZ;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Euler {
-	x: f32,
-	y: f32,
-	z: f32,
-	order: RotationOrders,
+	pub x: f32,
+	pub y: f32,
+	pub z: f32,
+	pub order: RotationOrders,
 }
 
 impl Euler {

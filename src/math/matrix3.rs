@@ -3,7 +3,7 @@ use super::vector3::Vector3;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Matrix3 {
-	elements: [f32; 9] 
+	pub elements: [f32; 9] 
 }
 
 impl Matrix3 {

@@ -3,9 +3,9 @@ use super::math_static::clamp;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Spherical {
-	radius: f32,
-	phi: f32,
-	theta: f32
+	pub radius: f32,
+	pub phi: f32,
+	pub theta: f32,
 }
 
 impl Spherical {
