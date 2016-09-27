@@ -1,6 +1,7 @@
 extern crate uuid;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 use std::cell::{Ref, RefMut, RefCell};
+use std::cmp::{Eq, PartialEq};
 use self::uuid::Uuid;
 use super::super::math::vector3::Vector3;
 use super::super::math::quaternion::Quaternion;
@@ -18,6 +19,7 @@ pub static mut DEFAULT_MATRIX_AUTO_UPDATE: bool = true;
 
 #[derive(Debug, Clone)]
 pub struct Object3D {
+	_self: Option<Weak<RefCell<Object3D>>>,
 	uuid: Uuid,
 	name: &'static str,
 	children: Vec<Rc<RefCell<Object3D>>>,
@@ -36,12 +38,20 @@ pub struct Object3D {
 	cast_shadow: bool,
 	receive_shadow: bool,
 	frustum_culled: bool,
-	render_order: u32
+	render_order: u32,
+	parent: Option<Rc<RefCell<Object3D>>>,
+}
+
+impl PartialEq for Object3D {
+	 fn eq(&self, other: &Object3D) -> bool {
+		 self.uuid == other.uuid
+	 }
 }
 
 impl Object3D {
-	pub fn new() -> Object3D {
-		Object3D {
+	pub fn new() -> Rc<RefCell<Object3D>> {
+		let mut o = Object3D {
+			_self: Option::None,
 			uuid: Uuid::new_v4(),
 			name: "",
 			children: vec![],
@@ -65,7 +75,12 @@ impl Object3D {
 			receive_shadow: false,
 			frustum_culled: true,
 			render_order: 0,
-		}
+			parent: Option::None,
+		};
+		let rc = Rc::new(RefCell::from(o));
+		let weak = Rc::downgrade(&rc);
+		rc.borrow_mut()._self = Some(weak);
+		rc
 	}
 
 	pub fn apply_matrix(&mut self, matrix: &Matrix4) {
@@ -180,5 +195,10 @@ impl Object3D {
 		self.quaternion.set_from_rotation_matrix(&m1);
 	}
 
-	// pub fn add(&mut self, )
+	pub fn add(&mut self, object: Rc<RefCell<Object3D>>) {
+		let ref mut s = self._self;
+		let self_rc = s.as_mut().unwrap().upgrade().unwrap();
+		object.borrow_mut().parent = Some(self_rc);
+		self.children.push(object);
+	}
 }
