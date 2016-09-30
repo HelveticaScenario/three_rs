@@ -17,12 +17,16 @@ pub static mut DEFAULT_UP: Vector3 = Vector3 {
 };
 pub static mut DEFAULT_MATRIX_AUTO_UPDATE: bool = true;
 
-#[derive(Debug, Clone)]
+pub trait HasObject3D {
+	fn get_object3d(&self) -> &Object3D;
+	fn get_object3d_mut(&mut self) -> &mut Object3D;
+}
+
+#[derive(Clone)]
 pub struct Object3D {
-	_self: Option<Weak<RefCell<Object3D>>>,
 	uuid: Uuid,
 	name: &'static str,
-	children: Vec<Rc<RefCell<Object3D>>>,
+	children: Vec<Rc<RefCell<HasObject3D>>>,
 	up: Vector3,
 	position: Vector3,
 	quaternion: Quaternion,
@@ -39,7 +43,17 @@ pub struct Object3D {
 	receive_shadow: bool,
 	frustum_culled: bool,
 	render_order: u32,
-	parent: Option<Rc<RefCell<Object3D>>>,
+	parent: Option<Weak<RefCell<HasObject3D>>>,
+}
+
+impl HasObject3D for Object3D {
+	fn get_object3d(&self) -> &Object3D {
+		self
+	}
+	
+	fn get_object3d_mut(&mut self) -> &mut Object3D {
+		self
+	}
 }
 
 impl PartialEq for Object3D {
@@ -49,9 +63,8 @@ impl PartialEq for Object3D {
 }
 
 impl Object3D {
-	pub fn new() -> Rc<RefCell<Object3D>> {
-		let mut o = Object3D {
-			_self: Option::None,
+	pub fn new() -> Object3D {
+		Object3D {
 			uuid: Uuid::new_v4(),
 			name: "",
 			children: vec![],
@@ -76,11 +89,7 @@ impl Object3D {
 			frustum_culled: true,
 			render_order: 0,
 			parent: Option::None,
-		};
-		let rc = Rc::new(RefCell::from(o));
-		let weak = Rc::downgrade(&rc);
-		rc.borrow_mut()._self = Some(weak);
-		rc
+		}
 	}
 
 	pub fn apply_matrix(&mut self, matrix: &Matrix4) {
@@ -195,10 +204,33 @@ impl Object3D {
 		self.quaternion.set_from_rotation_matrix(&m1);
 	}
 
-	pub fn add(&mut self, object: Rc<RefCell<Object3D>>) {
-		let ref mut s = self._self;
-		let self_rc = s.as_mut().unwrap().upgrade().unwrap();
-		object.borrow_mut().parent = Some(self_rc);
-		self.children.push(object);
+	pub fn add(parent: &Rc<RefCell<HasObject3D>>, child: &Rc<RefCell<HasObject3D>>) {
+		let weak = Rc::downgrade(parent);
+		child.borrow_mut().get_object3d_mut().parent = Some(weak);
+		parent.borrow_mut().get_object3d_mut().children.push(child.clone());
 	}
+
+	pub fn remove(&mut self, object: &Rc<RefCell<HasObject3D>>) -> bool {
+		let mut idx: Option<usize> = Option::None;
+		for (i, o) in self.children.iter().enumerate() {
+			if o.borrow().get_object3d() == object.borrow().get_object3d() {
+				idx = Some(i);
+				break;
+			}
+		}
+		if let Some(i) = idx {
+			self.children.swap_remove(i);
+			object.borrow_mut().get_object3d_mut().parent = Option::None;
+			return true;
+		}
+		false
+	}
+
+	// pub fn remove_self(&mut self) -> bool {
+	// 	if self.parent.is_some() {
+	// 		true
+	// 	} else {
+	// 		false
+	// 	}
+	// }
 }
